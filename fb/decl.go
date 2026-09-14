@@ -1,9 +1,5 @@
 package fb
 
-import (
-	"strings"
-)
-
 type Decl interface {
 	OutputIndex_() int
 	Name_() string
@@ -233,43 +229,7 @@ func (f *Func) Write(w Writer) {
 	}
 
 	// Signature
-	w.Write("pub func %s(", f.Name)
-
-	for i, param := range f.Params {
-		if i > 0 {
-			w.Write(", ")
-		}
-
-		w.Write("%s: ", param.Name)
-		param.Type.Write(w)
-	}
-
-	w.Write(")")
-
-	// Returns
-	if s, ok := f.Returns.(*SimpleType); !ok || s.Text != "void" {
-		w.Write(" ")
-		f.Returns.Write(w)
-	}
-
+	w.Write("pub ")
+	WriteSignature(w, f.Name, None, f.Params, f.Returns)
 	w.Write(";\n")
-}
-
-// utils
-
-func WriteDocumentation(w Writer, docs string, indent string) {
-	for line := range strings.Lines(docs) {
-		line = strings.TrimSpace(line)
-
-		if indent != "" {
-			w.Write(indent)
-		}
-
-		if line == "" {
-			w.Write("///\n")
-			continue
-		}
-
-		w.Write("/// %s\n", line)
-	}
 }

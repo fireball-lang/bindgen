@@ -69,31 +69,12 @@ func (p *PointerType) Write(w Writer) {
 // FuncType
 
 type FuncType struct {
-	Params  []Param
+	Params  []*Param
 	Returns Type
 }
 
 func (f *FuncType) isType() {}
 
 func (f *FuncType) Write(w Writer) {
-	w.Write("func(")
-
-	for i, param := range f.Params {
-		if i > 0 {
-			w.Write(", ")
-		}
-
-		if param.Name != "" {
-			w.Write("%s: ", param.Name)
-		}
-
-		param.Type.Write(w)
-	}
-
-	w.Write(")")
-
-	if s, ok := f.Returns.(*SimpleType); !ok || s.Text != "void" {
-		w.Write(" ")
-		f.Returns.Write(w)
-	}
+	WriteSignature(w, "", None, f.Params, f.Returns)
 }

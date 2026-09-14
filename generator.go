@@ -479,34 +479,15 @@ func (g *generator) WriteMethods(w *Writer, s *fb.Struct, methods []*fb.Func) {
 			name = method.Name
 		}
 
-		w.Write("    pub func %s(", name)
-
+		receiver := fb.Immutable
 		if method.Params[method.ReceiverIndex].Type.(*fb.PointerType).Mutable {
-			w.Write("mut self")
-		} else {
-			w.Write("self")
+			receiver = fb.Mutable
 		}
 
-		for i, param := range method.Params {
-			if i == method.ReceiverIndex {
-				continue
-			}
+		params := slices.Delete(method.Params, method.ReceiverIndex, method.ReceiverIndex+1)
 
-			w.Write(", %s: ", param.Name)
-			param.Type.Write(w)
-		}
-
-		w.Write(")")
-
-		// Returns
-		returns := false
-
-		if s, ok := method.Returns.(*fb.SimpleType); !ok || s.Text != "void" {
-			w.Write(" ")
-			method.Returns.Write(w)
-
-			returns = true
-		}
+		w.Write("    pub ")
+		returns := fb.WriteSignature(w, name, receiver, params, method.Returns)
 
 		// Body
 		w.Write(" {\n")

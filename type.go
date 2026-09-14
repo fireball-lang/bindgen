@@ -56,11 +56,11 @@ func ParseCType(str string, custom func(str string) fb.Type) fb.Type {
 			paramsStr = paramsStr[1 : len(paramsStr)-1]
 		}
 
-		var params []fb.Param
+		var params []*fb.Param
 
 		if paramsStr != "" && paramsStr != "void" {
 			for _, arg := range splitParams(paramsStr) {
-				params = append(params, fb.Param{
+				params = append(params, &fb.Param{
 					Name: "",
 					Type: ParseCType(arg, custom),
 				})
