@@ -71,6 +71,35 @@ type declNodePair struct {
 	node *c.Node
 }
 
+var KEYWORDS = []string{
+	"pub",
+	"mut",
+	"mod",
+	"import",
+	"struct",
+	"enum",
+	"interface",
+	"impl",
+	"type",
+	"func",
+	"const",
+	"var",
+	"if",
+	"else",
+	"while",
+	"for",
+	"return",
+	"break",
+	"continue",
+	"with",
+	"as",
+	"or",
+	"sizeof",
+	"alignof",
+	"offsetof",
+	"typeof",
+}
+
 func Generate(opts Options) error {
 	g := generator{
 		opts:          opts,
@@ -578,6 +607,10 @@ func (g *generator) SetupDefaults() {
 		if transformAlias != nil {
 			transformAlias(a)
 		}
+
+		if slices.Contains(KEYWORDS, a.Name) {
+			a.Name += "_"
+		}
 	}
 
 	g.opts.TransformStruct = func(s *fb.Struct) {
@@ -585,6 +618,16 @@ func (g *generator) SetupDefaults() {
 
 		if transformStruct != nil {
 			transformStruct(s)
+		}
+
+		if slices.Contains(KEYWORDS, s.Name) {
+			s.Name += "_"
+		}
+
+		for _, field := range s.Fields {
+			if slices.Contains(KEYWORDS, field.Name) {
+				field.Name += "_"
+			}
 		}
 	}
 
@@ -595,8 +638,14 @@ func (g *generator) SetupDefaults() {
 			transformEnum(e)
 		}
 
+		if slices.Contains(KEYWORDS, e.Name) {
+			e.Name += "_"
+		}
+
 		for _, cas := range e.Cases {
-			if cas.Name[0] >= '0' && cas.Name[0] <= '9' {
+			if slices.Contains(KEYWORDS, cas.Name) {
+				cas.Name += "_"
+			} else if cas.Name[0] >= '0' && cas.Name[0] <= '9' {
 				cas.Name = e.Name + cas.Name
 			}
 		}
@@ -608,10 +657,16 @@ func (g *generator) SetupDefaults() {
 		if transformFunc != nil {
 			transformFunc(f)
 		}
-	}
 
-	if g.opts.TransformFunc == nil {
-		g.opts.TransformFunc = func(f *fb.Func) {}
+		if slices.Contains(KEYWORDS, f.Name) {
+			f.Name += "_"
+		}
+
+		for _, param := range f.Params {
+			if slices.Contains(KEYWORDS, param.Name) {
+				param.Name += "_"
+			}
+		}
 	}
 
 	// Order
