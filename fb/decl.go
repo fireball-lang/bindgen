@@ -1,8 +1,6 @@
 package fb
 
 import (
-	"fmt"
-	"io"
 	"strings"
 )
 
@@ -10,7 +8,7 @@ type Decl interface {
 	OutputIndex_() int
 	Name_() string
 
-	Write(w io.Writer)
+	Write(w Writer)
 }
 
 // Alias
@@ -32,12 +30,12 @@ func (a *Alias) Name_() string {
 	return a.Name
 }
 
-func (a *Alias) Write(w io.Writer) {
+func (a *Alias) Write(w Writer) {
 	WriteDocumentation(w, a.Documentation, "")
 
-	_, _ = fmt.Fprintf(w, "pub type %s = ", a.Name)
+	w.Write("pub type %s = ", a.Name)
 	a.Type.Write(w)
-	_, _ = fmt.Fprint(w, ";\n")
+	w.Write(";\n")
 }
 
 // Enum
@@ -80,36 +78,36 @@ func (e *Enum) Name_() string {
 	return e.Name
 }
 
-func (e *Enum) Write(w io.Writer) {
+func (e *Enum) Write(w Writer) {
 	WriteDocumentation(w, e.Documentation, "")
 
-	_, _ = fmt.Fprintf(w, "pub enum %s", e.Name)
+	w.Write("pub enum %s", e.Name)
 
 	if e.Type != nil {
-		_, _ = fmt.Fprint(w, " : ")
+		w.Write(" : ")
 		e.Type.Write(w)
 	}
 
-	_, _ = fmt.Fprint(w, " {\n")
+	w.Write(" {\n")
 
 	for _, cas := range e.Cases {
 		WriteDocumentation(w, cas.Documentation, "    ")
 
 		if cas.Value == "" {
-			_, _ = fmt.Fprintf(w, "    %s,\n", cas.Name)
+			w.Write("    %s,\n", cas.Name)
 		} else {
-			_, _ = fmt.Fprintf(w, "    %s = %s,\n", cas.Name, cas.Value)
+			w.Write("    %s = %s,\n", cas.Name, cas.Value)
 		}
 	}
 
-	_, _ = fmt.Fprint(w, "}\n")
+	w.Write("}\n")
 
 	// Bitfield
 	if e.Bitfield {
-		var underlying strings.Builder
+		underlying := stringWriter{parent: w}
 		e.Type.Write(&underlying)
 
-		_, _ = fmt.Fprintf(w, `
+		w.Write(`
 impl %[1]s : BitNot {
     type Result = %[1]s;
 
@@ -165,31 +163,31 @@ func (s *Struct) Name_() string {
 	return s.Name
 }
 
-func (s *Struct) Write(w io.Writer) {
+func (s *Struct) Write(w Writer) {
 	WriteDocumentation(w, s.Documentation, "")
 
 	if s.Union {
-		_, _ = fmt.Fprint(w, "#[repr(Union)]\n")
+		w.Write("#[repr(Union)]\n")
 	} else {
-		_, _ = fmt.Fprint(w, "#[repr(C)]\n")
+		w.Write("#[repr(C)]\n")
 	}
 
 	if len(s.Fields) == 0 {
-		_, _ = fmt.Fprintf(w, "pub struct %s {}\n", s.Name)
+		w.Write("pub struct %s {}\n", s.Name)
 		return
 	}
 
-	_, _ = fmt.Fprintf(w, "pub struct %s {\n", s.Name)
+	w.Write("pub struct %s {\n", s.Name)
 
 	for _, field := range s.Fields {
 		WriteDocumentation(w, field.Documentation, "    ")
 
-		_, _ = fmt.Fprintf(w, "    pub %s: ", field.Name)
+		w.Write("    pub %s: ", field.Name)
 		field.Type.Write(w)
-		_, _ = fmt.Fprint(w, ",\n")
+		w.Write(",\n")
 	}
 
-	_, _ = fmt.Fprint(w, "}\n")
+	w.Write("}\n")
 }
 
 // Func
@@ -222,56 +220,56 @@ func (f *Func) Name_() string {
 	return f.Name
 }
 
-func (f *Func) Write(w io.Writer) {
+func (f *Func) Write(w Writer) {
 	WriteDocumentation(w, f.Documentation, "")
 
 	// Attributes
-	_, _ = fmt.Fprint(w, "#[extern")
+	w.Write("#[extern")
 
 	if f.Name == f.LinkName {
-		_, _ = fmt.Fprint(w, "]\n")
+		w.Write("]\n")
 	} else {
-		_, _ = fmt.Fprintf(w, ", link_name(\"%s\")]\n", f.LinkName)
+		w.Write(", link_name(\"%s\")]\n", f.LinkName)
 	}
 
 	// Signature
-	_, _ = fmt.Fprintf(w, "pub func %s(", f.Name)
+	w.Write("pub func %s(", f.Name)
 
 	for i, param := range f.Params {
 		if i > 0 {
-			_, _ = fmt.Fprint(w, ", ")
+			w.Write(", ")
 		}
 
-		_, _ = fmt.Fprintf(w, "%s: ", param.Name)
+		w.Write("%s: ", param.Name)
 		param.Type.Write(w)
 	}
 
-	_, _ = fmt.Fprint(w, ")")
+	w.Write(")")
 
 	// Returns
 	if s, ok := f.Returns.(*SimpleType); !ok || s.Text != "void" {
-		_, _ = fmt.Fprint(w, " ")
+		w.Write(" ")
 		f.Returns.Write(w)
 	}
 
-	_, _ = fmt.Fprint(w, ";\n")
+	w.Write(";\n")
 }
 
 // utils
 
-func WriteDocumentation(w io.Writer, docs string, indent string) {
+func WriteDocumentation(w Writer, docs string, indent string) {
 	for line := range strings.Lines(docs) {
 		line = strings.TrimSpace(line)
 
 		if indent != "" {
-			_, _ = fmt.Fprint(w, indent)
+			w.Write(indent)
 		}
 
 		if line == "" {
-			_, _ = fmt.Fprint(w, "///\n")
+			w.Write("///\n")
 			continue
 		}
 
-		_, _ = fmt.Fprintf(w, "/// %s\n", line)
+		w.Write("/// %s\n", line)
 	}
 }

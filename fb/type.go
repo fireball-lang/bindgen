@@ -1,14 +1,9 @@
 package fb
 
-import (
-	"fmt"
-	"io"
-)
-
 type Type interface {
 	isType()
 
-	Write(w io.Writer)
+	Write(w Writer)
 }
 
 // Simple
@@ -19,8 +14,8 @@ type SimpleType struct {
 
 func (s *SimpleType) isType() {}
 
-func (s *SimpleType) Write(w io.Writer) {
-	_, _ = fmt.Fprint(w, s.Text)
+func (s *SimpleType) Write(w Writer) {
+	w.Write(s.Text)
 }
 
 // DeclType
@@ -31,8 +26,12 @@ type DeclType struct {
 
 func (d *DeclType) isType() {}
 
-func (d *DeclType) Write(w io.Writer) {
-	_, _ = fmt.Fprint(w, d.Decl.Name_())
+func (d *DeclType) Write(w Writer) {
+	if !w.IsOutputCurrent(d.Decl.OutputIndex_()) {
+		w.Write(w.GetOutputModule(d.Decl.OutputIndex_()))
+	}
+
+	w.Write(d.Decl.Name_())
 }
 
 // ArrayType
@@ -44,8 +43,8 @@ type ArrayType struct {
 
 func (a *ArrayType) isType() {}
 
-func (a *ArrayType) Write(w io.Writer) {
-	_, _ = fmt.Fprintf(w, "[%d]", a.Size)
+func (a *ArrayType) Write(w Writer) {
+	w.Write("[%d]", a.Size)
 	a.Element.Write(w)
 }
 
@@ -58,12 +57,12 @@ type PointerType struct {
 
 func (p *PointerType) isType() {}
 
-func (p *PointerType) Write(w io.Writer) {
+func (p *PointerType) Write(w Writer) {
 	if p.Mutable {
-		_, _ = fmt.Fprint(w, "mut ")
+		w.Write("mut ")
 	}
 
-	_, _ = fmt.Fprint(w, "*")
+	w.Write("*")
 	p.Pointee.Write(w)
 }
 
@@ -76,25 +75,25 @@ type FuncType struct {
 
 func (f *FuncType) isType() {}
 
-func (f *FuncType) Write(w io.Writer) {
-	_, _ = fmt.Fprint(w, "func(")
+func (f *FuncType) Write(w Writer) {
+	w.Write("func(")
 
 	for i, param := range f.Params {
 		if i > 0 {
-			_, _ = fmt.Fprint(w, ", ")
+			w.Write(", ")
 		}
 
 		if param.Name != "" {
-			_, _ = fmt.Fprintf(w, "%s: ", param.Name)
+			w.Write("%s: ", param.Name)
 		}
 
 		param.Type.Write(w)
 	}
 
-	_, _ = fmt.Fprint(w, ")")
+	w.Write(")")
 
 	if s, ok := f.Returns.(*SimpleType); !ok || s.Text != "void" {
-		_, _ = fmt.Fprint(w, " ")
+		w.Write(" ")
 		f.Returns.Write(w)
 	}
 }
