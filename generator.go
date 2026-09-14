@@ -484,7 +484,7 @@ func (g *generator) WriteMethods(w *Writer, s *fb.Struct, methods []*fb.Func) {
 			receiver = fb.Mutable
 		}
 
-		params := slices.Delete(method.Params, method.ReceiverIndex, method.ReceiverIndex+1)
+		params := slices.Delete(slices.Clone(method.Params), method.ReceiverIndex, method.ReceiverIndex+1)
 
 		w.Write("    pub ")
 		returns := fb.WriteSignature(w, name, receiver, params, method.Returns)

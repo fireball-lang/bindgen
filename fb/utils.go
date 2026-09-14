@@ -48,7 +48,14 @@ func WriteSignature(w Writer, name string, receiver Receiver, params []*Param, r
 			w.Write(", ")
 		}
 
-		w.Write("%s: ", param.Name)
+		if param.Name == "" {
+			if name != "" {
+				panic("fb.WriteSignature() - Param name cannot be empty when the function name isn't empty")
+			}
+		} else {
+			w.Write("%s: ", param.Name)
+		}
+
 		param.Type.Write(w)
 	}
 
