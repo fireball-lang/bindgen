@@ -28,7 +28,7 @@ func (d *DeclType) isType() {}
 
 func (d *DeclType) Write(w Writer) {
 	if !w.IsOutputCurrent(d.Decl.OutputIndex_()) {
-		w.Write(w.GetOutputModule(d.Decl.OutputIndex_()))
+		w.Write("%s::", w.GetOutputModule(d.Decl.OutputIndex_()))
 	}
 
 	w.Write(d.Decl.Name_())
