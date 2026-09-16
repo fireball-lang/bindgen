@@ -13,6 +13,7 @@ type Alias struct {
 	OutputIndex int
 
 	Documentation string
+	Attributes    []string
 
 	Name string
 	Type Type
@@ -28,6 +29,7 @@ func (a *Alias) Name_() string {
 
 func (a *Alias) Write(w Writer) {
 	WriteDocumentation(w, a.Documentation, "")
+	WriteAttributes(w, a.Attributes, "")
 
 	w.Write("pub type %s = ", a.Name)
 	a.Type.Write(w)
@@ -38,6 +40,7 @@ func (a *Alias) Write(w Writer) {
 
 type Case struct {
 	Documentation string
+	Attributes    []string
 
 	Name  string
 	Value string
@@ -47,6 +50,7 @@ type Enum struct {
 	OutputIndex int
 
 	Documentation string
+	Attributes    []string
 
 	Name string
 	Type Type
@@ -76,6 +80,7 @@ func (e *Enum) Name_() string {
 
 func (e *Enum) Write(w Writer) {
 	WriteDocumentation(w, e.Documentation, "")
+	WriteAttributes(w, e.Attributes, "")
 
 	w.Write("pub enum %s", e.Name)
 
@@ -88,6 +93,7 @@ func (e *Enum) Write(w Writer) {
 
 	for _, cas := range e.Cases {
 		WriteDocumentation(w, cas.Documentation, "    ")
+		WriteAttributes(w, cas.Attributes, "    ")
 
 		if cas.Value == "" {
 			w.Write("    %s,\n", cas.Name)
@@ -143,6 +149,7 @@ const (
 
 type Field struct {
 	Documentation string
+	Attributes    []string
 
 	Name string
 	Type Type
@@ -152,6 +159,7 @@ type Struct struct {
 	OutputIndex int
 
 	Documentation string
+	Attributes    []string
 
 	Name   string
 	Fields []*Field
@@ -168,15 +176,18 @@ func (s *Struct) Name_() string {
 }
 
 func (s *Struct) Write(w Writer) {
-	WriteDocumentation(w, s.Documentation, "")
+	attributes := s.Attributes
 
 	switch s.Layout {
 	case C:
-		w.Write("#[repr(C)]\n")
+		attributes = append([]string{"repr(C)"}, attributes...)
 	case Union:
-		w.Write("#[repr(Union)]\n")
+		attributes = append([]string{"repr(Union)"}, attributes...)
 	case Fireball:
 	}
+
+	WriteDocumentation(w, s.Documentation, "")
+	WriteAttributes(w, attributes, "")
 
 	if len(s.Fields) == 0 {
 		w.Write("pub struct %s {}\n", s.Name)
@@ -187,6 +198,7 @@ func (s *Struct) Write(w Writer) {
 
 	for _, field := range s.Fields {
 		WriteDocumentation(w, field.Documentation, "    ")
+		WriteAttributes(w, field.Attributes, "    ")
 
 		w.Write("    pub %s: ", field.Name)
 		field.Type.Write(w)
@@ -207,6 +219,7 @@ type Func struct {
 	OutputIndex int
 
 	Documentation string
+	Attributes    []string
 
 	Name     string
 	LinkName string
@@ -228,6 +241,7 @@ func (f *Func) Name_() string {
 
 func (f *Func) Write(w Writer) {
 	WriteDocumentation(w, f.Documentation, "")
+	WriteAttributes(w, f.Attributes, "")
 
 	// Attributes
 	w.Write("#[extern")

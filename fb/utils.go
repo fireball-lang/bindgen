@@ -19,6 +19,25 @@ func WriteDocumentation(w Writer, docs string, indent string) {
 	}
 }
 
+func WriteAttributes(w Writer, attributes []string, indent string) {
+	if len(attributes) == 0 {
+		return
+	}
+
+	w.Write("%s", indent)
+	w.Write("#[")
+
+	for i, attribute := range attributes {
+		if i > 0 {
+			w.Write(", ")
+		}
+
+		w.Write("%s", attribute)
+	}
+
+	w.Write("]\n")
+}
+
 type Receiver uint8
 
 const (
