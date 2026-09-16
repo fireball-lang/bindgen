@@ -11,25 +11,34 @@ func CamelToSnakeCase(str string) string {
 	runes := []rune(str)
 
 	var sb strings.Builder
+	last := rune(0)
+
+	write := func(ch rune) {
+		sb.WriteRune(ch)
+		last = ch
+	}
 
 	for i, ch := range runes {
 		// The D of a 1D/2D/3D suffix belongs to the digit
 		if i > 0 && (runes[i-1] == '1' || runes[i-1] == '2' || runes[i-1] == '3') && ch == 'D' &&
 			(i+1 == len(runes) || !unicode.IsLower(runes[i+1])) {
-			sb.WriteRune('d')
+			write('d')
 			continue
 		}
 
 		// 1D/2D/3D suffixes get their underscore before the digit
 		if (ch == '1' || ch == '2' || ch == '3') && i+1 < len(runes) && runes[i+1] == 'D' &&
 			(i+2 == len(runes) || !unicode.IsLower(runes[i+2])) {
-			sb.WriteRune('_')
-			sb.WriteRune(ch)
+			if last != '_' {
+				write('_')
+			}
+
+			write(ch)
 			continue
 		}
 
 		if !unicode.IsUpper(ch) {
-			sb.WriteRune(ch)
+			write(ch)
 			continue
 		}
 
@@ -37,11 +46,13 @@ func CamelToSnakeCase(str string) string {
 			prev := runes[i-1]
 
 			if !unicode.IsUpper(prev) || i+1 < len(runes) && unicode.IsLower(runes[i+1]) {
-				sb.WriteRune('_')
+				if last != '_' {
+					write('_')
+				}
 			}
 		}
 
-		sb.WriteRune(unicode.ToLower(ch))
+		write(unicode.ToLower(ch))
 	}
 
 	return sb.String()
