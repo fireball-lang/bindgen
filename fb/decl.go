@@ -133,6 +133,14 @@ impl %[1]s : BitAnd[%[1]s] {
 
 // Struct
 
+type Layout uint8
+
+const (
+	C Layout = iota
+	Union
+	Fireball
+)
+
 type Field struct {
 	Documentation string
 
@@ -148,7 +156,7 @@ type Struct struct {
 	Name   string
 	Fields []*Field
 
-	Union bool
+	Layout Layout
 }
 
 func (s *Struct) OutputIndex_() int {
@@ -162,10 +170,12 @@ func (s *Struct) Name_() string {
 func (s *Struct) Write(w Writer) {
 	WriteDocumentation(w, s.Documentation, "")
 
-	if s.Union {
-		w.Write("#[repr(Union)]\n")
-	} else {
+	switch s.Layout {
+	case C:
 		w.Write("#[repr(C)]\n")
+	case Union:
+		w.Write("#[repr(Union)]\n")
+	case Fireball:
 	}
 
 	if len(s.Fields) == 0 {

@@ -256,10 +256,15 @@ func (g *generator) CreateDecls() {
 			}
 
 		case "RecordDecl":
+			layout := fb.C
+			if node.Tag == "union" {
+				layout = fb.Union
+			}
+
 			decl = &fb.Struct{
 				Documentation: node.Documentation(),
 				Name:          node.Name,
-				Union:         node.Tag == "union",
+				Layout:        layout,
 			}
 
 		case "FunctionDecl":
