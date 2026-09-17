@@ -151,8 +151,9 @@ type Field struct {
 	Documentation string
 	Attributes    []string
 
-	Name string
-	Type Type
+	Public bool
+	Name   string
+	Type   Type
 }
 
 type Struct struct {
@@ -200,7 +201,12 @@ func (s *Struct) Write(w Writer) {
 		WriteDocumentation(w, field.Documentation, "    ")
 		WriteAttributes(w, field.Attributes, "    ")
 
-		w.Write("    pub %s: ", field.Name)
+		if field.Public {
+			w.Write("    pub %s: ", field.Name)
+		} else {
+			w.Write("    %s: ", field.Name)
+		}
+
 		field.Type.Write(w)
 		w.Write(",\n")
 	}

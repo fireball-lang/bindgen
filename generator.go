@@ -392,6 +392,7 @@ func (g *generator) ResolveDecls() {
 				if node.Kind == "FieldDecl" {
 					decl.Fields = append(decl.Fields, &fb.Field{
 						Documentation: node.Documentation(),
+						Public:        true,
 						Name:          node.Name,
 						Type:          g.ParseType(node.Type.QualType),
 					})
