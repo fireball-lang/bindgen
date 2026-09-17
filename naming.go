@@ -91,8 +91,10 @@ func GetDeclOrder(decl fb.Decl) int {
 		return 2
 	case *fb.Struct:
 		return 3
-	case *fb.Func:
+	case *fb.Const:
 		return 4
+	case *fb.Func:
+		return 5
 
 	default:
 		panic("bindgen.GetDeclOrder() - Invalid declaration")

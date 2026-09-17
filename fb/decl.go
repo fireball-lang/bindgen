@@ -208,6 +208,36 @@ func (s *Struct) Write(w Writer) {
 	w.Write("}\n")
 }
 
+// Const
+
+type Const struct {
+	OutputIndex int
+
+	Documentation string
+	Attributes    []string
+
+	Name  string
+	Type  Type
+	Value string
+}
+
+func (c *Const) OutputIndex_() int {
+	return c.OutputIndex
+}
+
+func (c *Const) Name_() string {
+	return c.Name
+}
+
+func (c *Const) Write(w Writer) {
+	WriteDocumentation(w, c.Documentation, "")
+	WriteAttributes(w, c.Attributes, "")
+
+	w.Write("pub const %s: ", c.Name)
+	c.Type.Write(w)
+	w.Write(" = %s;\n", c.Value)
+}
+
 // Func
 
 type Param struct {
