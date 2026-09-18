@@ -433,7 +433,19 @@ func (g *generator) TransformDecls() {
 			g.opts.TransformFunc(decl)
 
 			if decl.ReceiverIndex >= 0 {
-				s := decl.Params[decl.ReceiverIndex].Type.(*fb.PointerType).Pointee.(*fb.DeclType).Decl.(*fb.Struct)
+				var s *fb.Struct
+
+				switch t := stripAlias(decl.Params[decl.ReceiverIndex].Type).(type) {
+				case *fb.PointerType:
+					s = stripAlias(t.Pointee).(*fb.DeclType).Decl.(*fb.Struct)
+				case *fb.DeclType:
+					s = t.Decl.(*fb.Struct)
+				}
+
+				if s == nil {
+					panic("bindgen.generator.TransformDecls() - Failed to find target struct for method receiver")
+				}
+
 				g.structMethods[s] = append(g.structMethods[s], decl)
 			}
 		}
@@ -441,6 +453,21 @@ func (g *generator) TransformDecls() {
 		i := decl.OutputIndex_()
 		g.fileDecls[i] = append(g.fileDecls[i], decl)
 	}
+}
+
+func stripAlias(t fb.Type) fb.Type {
+	for {
+		if dt, ok := t.(*fb.DeclType); ok {
+			if d, ok := dt.Decl.(*fb.Alias); ok {
+				t = d.Type
+				continue
+			}
+		}
+
+		break
+	}
+
+	return t
 }
 
 func (g *generator) WriteFile(i int) error {
