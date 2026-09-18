@@ -513,7 +513,7 @@ func (g *generator) WriteMethods(w *Writer, s *fb.Struct, methods []*fb.Func) {
 		}
 
 		receiver := fb.Immutable
-		if method.Params[method.ReceiverIndex].Type.(*fb.PointerType).Mutable {
+		if pt, ok := stripAlias(method.Params[method.ReceiverIndex].Type).(*fb.PointerType); ok && pt.Mutable {
 			receiver = fb.Mutable
 		}
 
